@@ -1,15 +1,5 @@
 # Basic PostgreSQL Commands
 
-## Summary
-This note covers fundamental PostgreSQL (psql) commands for connecting to the server, managing databases, and basic navigation. It includes CLI interactions for creating, listing, and switching databases.
-
-## Key Points
-- **Connect** to PostgreSQL using `psql -U postgres`
-- **Create** a new database with `CREATE DATABASE database_name;`
-- **List** all databases using `SELECT datname FROM pg_database;` or `\list`
-- **Clear** the screen with `\! cls`
-- **Switch** to a database via `\c database_name`
-
 ## Detailed Notes
 
 ### Connecting to psql
@@ -32,11 +22,3 @@ This note covers fundamental PostgreSQL (psql) commands for connecting to the se
 - Use `\c database_name` to connect to a specific database.
 - Shortcut for `CONNECT TO database_name`.
 
-## Key Takeaways
-- **psql** is the primary CLI tool for PostgreSQL interactions.
-- Meta-commands start with `\` (e.g., `\list`, `\c`).
-- SQL commands end with `;` (e.g., `CREATE DATABASE`).
-- Combine system commands with `\!` for shell access.
-
-## References
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/current/app-psql.html)
