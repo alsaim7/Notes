@@ -1,24 +1,78 @@
 # Basic PostgreSQL Commands
 
-## Detailed Notes
+## Summary
+Essential PostgreSQL commands for database operations including connection, CRUD operations (Create, Read, Update, Delete), and utility commands.
 
-### Connecting to psql
-- Use the command `psql -U postgres` to log in as the **postgres** user.
-- This starts the interactive **psql** shell.
+## Key Points
+- **psql** is PostgreSQL's interactive terminal
+- SQL commands end with semicolons `;`
+- Meta-commands (starting with `\`) don't require semicolons
+- Always be careful with UPDATE and DELETE operations (use WHERE clauses)
 
-### Creating Databases
-- Inside psql, run `CREATE DATABASE database_name;` to create a new database.
-- Replace `database_name` with your desired name.
+## Connection & Database Management
 
-### Listing Databases
-- Query system catalog: `SELECT datname FROM pg_database;`
-- Or use meta-command: `\list` (or `\l`) to display all databases.
+### Connecting to PostgreSQL
+```sql
+psql -U postgres
+```
+Logs in as the **postgres** user and starts the interactive **psql** shell.
 
-### Utility Commands
-- Clear the terminal: `\! cls`
-- This executes the system command **cls** from within psql.
+### Database Operations
+| Command | Purpose | Example |
+|---------|---------|---------|
+| Create Database | Create new database | `CREATE DATABASE database_name;` |
+| List Databases | Show all databases | `\list` or `\l` |
+| Switch Database | Connect to specific DB | `\c database_name` |
 
-### Switching Databases
-- Use `\c database_name` to connect to a specific database.
-- Shortcut for `CONNECT TO database_name`.
+**Alternative way to list databases:**
+```sql
+SELECT datname FROM pg_database;
+```
 
+## Data Manipulation (CRUD Operations)
+
+### Create - Inserting Data
+```sql
+INSERT INTO example_table (name, city, id)
+VALUES 
+('Levi Ackerman', 'Japan', 2),
+('Tony Stark', 'USA', 3);
+```
+*Inserts multiple rows into the table.*
+
+### Read - Selecting Data
+```sql
+-- Select all columns
+SELECT * FROM example_table;
+
+-- Select specific columns
+SELECT name, city FROM example_table;
+
+-- Select with conditions
+SELECT * FROM example_table WHERE id = 2;
+```
+*Retrieves data from the table.*
+
+### Update - Modifying Data
+```sql
+UPDATE example_table
+SET city = 'Wall Maria'
+WHERE id = 2;
+```
+**⚠️ Important:** Always use WHERE clause to avoid updating all rows.
+
+### Delete - Removing Data
+```sql
+DELETE FROM example_table
+WHERE id = 2;
+```
+**⚠️ Warning:** Without WHERE clause, this deletes ALL rows in the table.
+
+## Utility Commands
+| Command | Purpose |
+|---------|---------|
+| `\! cls` | Clear terminal (Windows) |
+| `\! clear` | Clear terminal (Linux/Mac) |
+| `\q` | Quit psql |
+| `\?` | Show help for meta-commands |
+| `\h` | Show help for SQL commands |
