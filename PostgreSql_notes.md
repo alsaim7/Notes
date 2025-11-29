@@ -1,63 +1,74 @@
 # Basic PostgreSQL Commands
 
 ## Summary
-Essential PostgreSQL commands for database operations including connection, CRUD operations, data types, constraints, and utility commands.
+
+Essential PostgreSQL commands for database operations including connection, CRUD operations, data types, constraints, operators, clauses, and utility commands.
 
 ## Key Points
-- **psql** is PostgreSQL's interactive terminal
-- SQL commands end with semicolons `;`
-- Meta-commands (starting with `\`) don't require semicolons
-- Always be careful with UPDATE and DELETE operations (use WHERE clauses)
-- Constraints ensure data integrity and validity
+
+* **psql** is PostgreSQL's interactive terminal
+* SQL commands end with semicolons `;`
+* Meta-commands (starting with `\`) don't require semicolons
+* Always be careful with UPDATE and DELETE operations (use WHERE clauses)
+* Constraints and conditions ensure data integrity and valid filtering
 
 ## Connection & Database Management
 
 ### Connecting to PostgreSQL
+
 ```sql
 psql -U postgres
 ```
-Logs in as the **postgres** user and starts the interactive **psql** shell.
+
+Logs in as the **postgres** user and opens the **psql** shell.
 
 ### Database Operations
-| Command | Purpose | Example |
-|---------|---------|---------|
-| Create Database | Create new database | `CREATE DATABASE database_name;` |
-| List Databases | Show all databases | `\list` or `\l` |
-| Switch Database | Connect to specific DB | `\c database_name` |
 
-**Alternative way to list databases:**
+| Command                          | Purpose                     |
+| -------------------------------- | --------------------------- |
+| `CREATE DATABASE database_name;` | Create new database         |
+| `\list` or `\l`                  | Show all databases          |
+| `\c database_name`               | Switch to specific database |
+
+Alternative SQL method:
+
 ```sql
 SELECT datname FROM pg_database;
 ```
 
+---
+
 ## Data Types in PostgreSQL
 
 ### Common Data Types
-| Type | Description | Example |
-|------|-------------|---------|
-| `SERIAL` | Auto-incrementing integer | `emp_id SERIAL` |
-| `VARCHAR(n)` | Variable-length string (max n chars) | `VARCHAR(100)` |
-| `DECIMAL(p,s)` | Exact numeric (precision, scale) | `DECIMAL(8,2)` |
-| `DATE` | Date without time | `'2025-10-10'` |
-| `INTEGER` | Whole numbers | `INTEGER` |
-| `BOOLEAN` | True/False values | `BOOLEAN` |
-| `TEXT` | Unlimited length text | `TEXT` |
+
+| Type           | Description                 |
+| -------------- | --------------------------- |
+| `SERIAL`       | Auto-increment number field |
+| `VARCHAR(n)`   | Variable-length string      |
+| `INTEGER`      | Whole number                |
+| `DECIMAL(p,s)` | Fixed precision number      |
+| `DATE`         | Stores date only            |
+| `BOOLEAN`      | True/False                  |
+| `TEXT`         | Unlimited length text       |
+
+---
 
 ## Table Constraints
 
-### Common Constraints
-| Constraint | Purpose | Example |
-|------------|---------|---------|
-| `PRIMARY KEY` | Unique identifier for each row | `emp_id SERIAL PRIMARY KEY` |
-| `NOT NULL` | Column cannot be empty | `fname VARCHAR(100) NOT NULL` |
-| `UNIQUE` | All values in column must be unique | `email VARCHAR(100) UNIQUE` |
-| `DEFAULT` | Default value when not specified | `salary DECIMAL(8,2) DEFAULT 30000` |
-| `CHECK` | Custom validation condition | `CHECK (salary > 0)` |
-| `FOREIGN KEY` | References primary key in another table | `dept_id INTEGER REFERENCES departments(id)` |
+| Constraint    | Purpose                     |
+| ------------- | --------------------------- |
+| `PRIMARY KEY` | Unique row identifier       |
+| `NOT NULL`    | Prevents empty values       |
+| `UNIQUE`      | No duplicate values allowed |
+| `DEFAULT`     | Sets default value          |
+| `CHECK`       | Validates condition         |
+| `FOREIGN KEY` | Refers to another table key |
 
-## Table Creation with Example
+---
 
-### Creating Employee Table
+## Create Table Example
+
 ```sql
 CREATE TABLE emp (
   emp_id SERIAL PRIMARY KEY NOT NULL,
@@ -70,75 +81,157 @@ CREATE TABLE emp (
 );
 ```
 
-**Explanation of each column:**
-- `emp_id`: Auto-incrementing primary key
-- `fname` & `lname`: Required text fields (cannot be NULL)
-- `email`: Required and must be unique across all records
-- `dept`: Optional department field (can be NULL)
-- `salary`: Decimal number with default value of 30,000
-- `hire_date`: Date with default as today's date
+---
 
-## Data Manipulation (CRUD Operations)
+## CRUD Operations
 
-### Create - Inserting Data
+### INSERT (Create)
+
 ```sql
--- Insert with specific columns (auto-generates emp_id and hire_date)
 INSERT INTO emp (fname, lname, email, dept, hire_date)
-VALUES ('Fatima', 'Farooqui', 'farooquifatima10@gmail.com', 'H.O.E', '2025-10-10');
-
--- Insert multiple rows with auto-generated hire_date
-INSERT INTO emp (fname, lname, email, dept, salary)
-VALUES 
-('Faraz', 'Khan', 'faraz.khan@example.com', 'Intern', 12000),
-('John', 'Doe', 'john.doe@example.com', 'IT', 50000);
+VALUES ('Fatima', 'Farooqui', 'test@gmail.com', 'H.O.E', '2025-10-10');
 ```
 
-### Read - Selecting Data
+### SELECT (Read)
+
 ```sql
--- Select all columns
 SELECT * FROM emp;
-
--- Select specific columns
-SELECT fname, lname, email FROM emp;
-
--- Select with conditions
-SELECT * FROM emp WHERE dept = 'Intern';
+SELECT fname, lname FROM emp;
+SELECT * FROM emp WHERE dept = 'IT';
 ```
 
-### Update - Modifying Data
+### UPDATE (Modify)
+
 ```sql
 UPDATE emp
 SET salary = 15000
 WHERE emp_id = 2;
 ```
-**⚠️ Important:** Always use WHERE clause to avoid updating all rows.
 
-### Delete - Removing Data
+⚠ Always use WHERE to avoid modifying all rows
+
+### DELETE (Remove)
+
 ```sql
 DELETE FROM emp
 WHERE emp_id = 1;
 ```
-**⚠️ Warning:** Without WHERE clause, this deletes ALL rows in the table.
 
-## Utility Commands
-| Command | Purpose |
-|---------|---------|
-| `\! cls` | Clear terminal (Windows) |
-| `\! clear` | Clear terminal (Linux/Mac) |
-| `\q` | Quit psql |
-| `\?` | Show help for meta-commands |
-| `\h` | Show help for SQL commands |
-| `\d table_name` | Describe table structure |
-| `\dt` | List all tables |
-
-## Key Takeaways
-- **CRUD Operations:** Create (INSERT), Read (SELECT), Update (UPDATE), Delete (DELETE)
-- **Data Types:** Choose appropriate types (SERIAL, VARCHAR, DECIMAL, DATE) for your data
-- **Constraints:** Use PRIMARY KEY, NOT NULL, UNIQUE, DEFAULT to enforce data integrity
-- **Safety First:** Always double-check WHERE clauses in UPDATE/DELETE statements
-- **Auto-generation:** SERIAL and DEFAULT values reduce manual data entry
-- **Two Command Types:** SQL commands (end with `;`) and Meta-commands (start with `\`)
+⚠ Without WHERE → deletes all rows
 
 ---
 
-The notes now comprehensively cover data types, constraints, and include your practical table creation example with detailed explanations!
+# Operators & Filtering Clauses
+
+### Relational Operators
+
+| Operator    | Use                |
+| ----------- | ------------------ |
+| `=`         | Equal              |
+| `<>` / `!=` | Not equal          |
+| `>` / `<`   | Greater/Less than  |
+| `>=` / `<=` | Greater/Less equal |
+
+### Logical Operators
+
+| Operator | Use                         |
+| -------- | --------------------------- |
+| `AND`    | All conditions must be true |
+| `OR`     | Any condition true          |
+| `NOT`    | Negates condition           |
+
+### BETWEEN
+
+```sql
+SELECT * FROM emp WHERE salary BETWEEN 20000 AND 50000;
+```
+
+### IN
+
+```sql
+SELECT * FROM emp WHERE dept IN ('IT','Intern');
+```
+
+### IS NULL / IS NOT NULL
+
+```sql
+SELECT * FROM emp WHERE dept IS NULL;
+SELECT * FROM emp WHERE dept IS NOT NULL;
+```
+
+---
+
+## DISTINCT
+
+```sql
+SELECT DISTINCT dept FROM emp;
+```
+
+Removes duplicate values
+
+---
+
+## ORDER BY
+
+```sql
+SELECT * FROM emp ORDER BY fname DESC;
+```
+
+Sort ASC(default) or DESC
+
+---
+
+## LIMIT
+
+```sql
+SELECT * FROM emp LIMIT 3;
+```
+
+Fetch limited rows
+
+---
+
+## LIKE (Pattern Matching)
+
+| Pattern | Meaning              |
+| ------- | -------------------- |
+| `J%`    | Starts with J        |
+| `%a`    | Ends with a          |
+| `%i%`   | Contains i           |
+| `__`    | Exactly 2 characters |
+| `_a%`   | Second char is a     |
+
+Examples:
+
+```sql
+SELECT * FROM emp WHERE fname LIKE 'J%';
+SELECT * FROM emp WHERE fname LIKE '%a';
+SELECT * FROM emp WHERE fname LIKE '%i%';
+SELECT * FROM emp WHERE dept LIKE '__';
+SELECT * FROM emp WHERE fname LIKE '_a%';
+```
+
+---
+
+## Utility Commands
+
+| Command         | Purpose                    |
+| --------------- | -------------------------- |
+| `\! cls`        | Clear terminal (Windows)   |
+| `\! clear`      | Clear terminal (Linux/Mac) |
+| `\q`            | Quit psql                  |
+| `\?`            | Meta-commands help         |
+| `\h`            | SQL command help           |
+| `\d table_name` | Describe table             |
+| `\dt`           | List tables                |
+
+---
+
+## Key Takeaways
+
+* CRUD = Create, Read, Update, Delete
+* WHERE + operators for filtering
+* DISTINCT removes duplicates
+* ORDER BY sorts data
+* LIMIT restricts rows
+* LIKE searches text patterns
