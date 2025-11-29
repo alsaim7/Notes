@@ -1,4 +1,4 @@
-# Basic PostgreSQL Commands
+# PostgreSQL Commands
 
 ## Summary
 
