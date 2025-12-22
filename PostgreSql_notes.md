@@ -2,7 +2,7 @@
 
 ## Summary
 
-Essential PostgreSQL commands for database operations including connection, CRUD operations, data types, constraints, operators, clauses, and utility commands.
+Essential PostgreSQL commands for database operations including connection, CRUD operations, data types, constraints, operators, clauses, functions, and utility commands.
 
 ## Key Points
 
@@ -11,6 +11,8 @@ Essential PostgreSQL commands for database operations including connection, CRUD
 * Meta-commands (starting with `\`) don't require semicolons
 * Always be careful with UPDATE and DELETE operations (use WHERE clauses)
 * Constraints and conditions ensure data integrity and valid filtering
+
+---
 
 ## Connection & Database Management
 
@@ -24,11 +26,11 @@ Logs in as the **postgres** user and opens the **psql** shell.
 
 ### Database Operations
 
-| Command                          | Purpose                     |
-| -------------------------------- | --------------------------- |
-| `CREATE DATABASE database_name;` | Create new database         |
-| `\list` or `\l`                  | Show all databases          |
-| `\c database_name`               | Switch to specific database |
+| Command                          | Purpose             |
+| -------------------------------- | ------------------- |
+| `CREATE DATABASE database_name;` | Create new database |
+| `\list` or `\l`                  | Show all databases  |
+| `\c database_name`               | Switch database     |
 
 Alternative SQL method:
 
@@ -121,7 +123,7 @@ WHERE emp_id = 1;
 
 ---
 
-# Operators & Filtering Clauses
+## Operators & Filtering Clauses
 
 ### Relational Operators
 
@@ -177,7 +179,7 @@ Removes duplicate values
 SELECT * FROM emp ORDER BY fname DESC;
 ```
 
-Sort ASC(default) or DESC
+Sort ASC (default) or DESC
 
 ---
 
@@ -213,25 +215,130 @@ SELECT * FROM emp WHERE fname LIKE '_a%';
 
 ---
 
+## Aggregate Functions
+
+Used to perform calculations on multiple rows and return a single value.
+
+* `COUNT()`
+* `SUM()`
+* `AVG()`
+* `MIN()`
+* `MAX()`
+
+Examples:
+
+```sql
+SELECT COUNT(emp_id) FROM emp;
+SELECT SUM(salary) FROM emp;
+SELECT AVG(salary) FROM emp;
+SELECT MAX(salary) FROM emp;
+```
+
+Finding employee(s) with minimum salary:
+
+```sql
+SELECT fname, lname, salary FROM emp
+WHERE salary = (SELECT MIN(salary) FROM emp);
+```
+
+---
+
+## GROUP BY
+
+Used to group rows that have the same values and apply aggregate functions.
+
+```sql
+SELECT dept, COUNT(fname) FROM emp
+GROUP BY dept;
+```
+
+```sql
+SELECT dept, SUM(salary) FROM emp
+GROUP BY dept;
+```
+
+---
+
+## String Functions
+
+### Common String Functions
+
+* `CONCAT()`, `CONCAT_WS()`
+* `SUBSTR()`
+* `LEFT()`, `RIGHT()`
+* `LENGTH()`
+* `UPPER()`, `LOWER()`
+* `TRIM()`, `LTRIM()`, `RTRIM()`
+* `REPLACE()`
+* `POSITION()`
+* `STRING_AGG()`
+
+Examples:
+
+```sql
+SELECT CONCAT(fname, lname) AS fullname FROM emp;
+```
+
+```sql
+SELECT CONCAT_WS(' ', fname, lname) AS fullname FROM emp;
+```
+
+```sql
+SELECT SUBSTR(fname, 1, 3) FROM emp;
+```
+
+```sql
+SELECT REPLACE(dept, 'IT', 'Software') FROM emp;
+```
+
+Reverse string (rarely used):
+
+```sql
+SELECT REVERSE(fname) FROM emp;
+```
+
+```sql
+SELECT LENGTH(fname) FROM emp;
+```
+
+```sql
+SELECT UPPER(fname) FROM emp;
+SELECT LOWER(fname) FROM emp;
+```
+
+Task-based examples:
+
+```sql
+SELECT CONCAT_WS(':', emp_id, fname, lname, dept) AS task1 FROM emp;
+```
+
+```sql
+SELECT CONCAT_WS(':', emp_id, fname, UPPER(dept)) AS task2 FROM emp;
+```
+
+---
+
 ## Utility Commands
 
-| Command         | Purpose                    |
-| --------------- | -------------------------- |
-| `\! cls`        | Clear terminal (Windows)   |
-| `\! clear`      | Clear terminal (Linux/Mac) |
-| `\q`            | Quit psql                  |
-| `\?`            | Meta-commands help         |
-| `\h`            | SQL command help           |
-| `\d table_name` | Describe table             |
-| `\dt`           | List tables                |
+| Command         | Purpose                  |
+| --------------- | ------------------------ |
+| `\! cls`        | Clear terminal (Windows) |
+| `\! clear`      | Clear terminal (Linux)   |
+| `\q`            | Quit psql                |
+| `\?`            | Meta-commands help       |
+| `\h`            | SQL command help         |
+| `\d table_name` | Describe table           |
+| `\dt`           | List tables              |
 
 ---
 
 ## Key Takeaways
 
 * CRUD = Create, Read, Update, Delete
+* Aggregate functions summarize data
+* GROUP BY works with aggregate functions
+* String functions help format and clean text
 * WHERE + operators for filtering
 * DISTINCT removes duplicates
 * ORDER BY sorts data
 * LIMIT restricts rows
-* LIKE searches text patterns
