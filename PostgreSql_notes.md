@@ -447,6 +447,156 @@ SELECT fname, salary,
 FROM employee;
 ```
 
+**Example — Calculating Bonus:**
+
+CASE can also be used for calculations. If no `ELSE` is provided and no condition matches, the result is `NULL`.
+
+```sql
+SELECT fname, salary,
+  CASE
+    WHEN salary > 0 THEN ROUND(salary * 0.10)
+  END AS bonus
+FROM employee;
+```
+
+**Example — GROUP BY with CASE:**
+
+You can group rows by the result of a CASE expression to get counts or aggregates per category.
+
+```sql
+SELECT
+  CASE
+    WHEN salary <= 30000 THEN 'Low Salary'
+    WHEN salary > 30000 AND salary <= 50000 THEN 'Mid Salary'
+    ELSE 'High Salary'
+  END AS sal_check,
+  COUNT(*) AS employee_count
+FROM employee
+GROUP BY sal_check;
+```
+
+---
+
+## Relationships
+
+A **relationship** links two tables together using a `FOREIGN KEY`. The foreign key in one table references the `PRIMARY KEY` of another, ensuring only valid, existing values can be inserted — this is called **referential integrity**.
+
+### Creating Related Tables
+
+```sql
+-- Parent table
+CREATE TABLE customers (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  phone TEXT UNIQUE NOT NULL
+);
+
+-- Child table — cust_id must match an existing id in customers
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  price DECIMAL(8,2) NOT NULL,
+  cust_id INTEGER NOT NULL,
+  FOREIGN KEY (cust_id) REFERENCES customers (id)
+);
+```
+
+### Inserting Related Data
+
+The parent record must exist before inserting into the child table.
+
+```sql
+INSERT INTO customers (name, email, phone)
+VALUES
+  ('Karan Verma', 'karan.verma@email.com', '9876501234'),
+  ('Priya Nair',  'priya.nair@email.com',  '9765412300'),
+  ('Manish Gupta', NULL,                   '9898989898');
+
+INSERT INTO orders (price, cust_id)
+VALUES (349.75, 3);
+```
+
+⚠ Inserting an order with a `cust_id` that doesn't exist in `customers` will be rejected
+
+---
+
+## Joins
+
+Joins combine rows from two or more tables based on a related column.
+
+### CROSS JOIN
+
+Returns every possible combination of rows from both tables (cartesian product). Rarely useful in practice.
+
+```sql
+SELECT * FROM customers
+CROSS JOIN orders;
+```
+
+### INNER JOIN
+
+Returns only the rows where there is a match in **both** tables. Non-matching rows are excluded.
+
+```sql
+SELECT * FROM customers c
+INNER JOIN orders d
+ON c.id = d.cust_id;
+```
+
+**INNER JOIN with GROUP BY:**
+
+Combine with aggregate functions to summarize data per customer.
+
+```sql
+-- Total number of orders per customer
+SELECT c.id, c.name, COUNT(d.id) AS no_of_orders
+FROM customers c
+INNER JOIN orders d
+ON c.id = d.cust_id
+GROUP BY c.id, c.name;
+
+-- Total amount spent per customer
+SELECT c.id, c.name, SUM(d.price) AS total_spent
+FROM customers c
+INNER JOIN orders d
+ON c.id = d.cust_id
+GROUP BY c.id, c.name;
+```
+
+### LEFT JOIN
+
+Returns **all rows from the left table** and matching rows from the right. If there is no match, right side columns show `NULL`.
+
+```sql
+SELECT * FROM customers c
+LEFT JOIN orders d
+ON c.id = d.cust_id;
+```
+
+> Use this when you want all customers — even those who haven't placed any orders.
+
+### RIGHT JOIN
+
+Returns **all rows from the right table** and matching rows from the left. If there is no match, left side columns show `NULL`.
+
+```sql
+SELECT * FROM customers c
+RIGHT JOIN orders d
+ON c.id = d.cust_id;
+```
+
+> Use this when you want all orders — even if the linked customer record is missing.
+
+### Join Types Summary
+
+| Join Type    | Returns                                               |
+| ------------ | ----------------------------------------------------- |
+| `CROSS JOIN` | All combinations of both tables                       |
+| `INNER JOIN` | Only rows with a match in both tables                 |
+| `LEFT JOIN`  | All left rows + matching right rows (NULL if no match)|
+| `RIGHT JOIN` | All right rows + matching left rows (NULL if no match)|
+
 ---
 
 ## Utility Commands
@@ -475,3 +625,5 @@ FROM employee;
 * LIMIT restricts rows
 * ALTER TABLE modifies table structure (columns, names, types, constraints)
 * CASE expression adds conditional logic directly inside queries
+* FOREIGN KEY links tables and enforces referential integrity
+* Joins combine data from multiple tables based on related columns
