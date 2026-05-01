@@ -481,10 +481,26 @@ GROUP BY sal_check;
 
 A **relationship** links two tables together using a `FOREIGN KEY`. The foreign key in one table references the `PRIMARY KEY` of another, ensuring only valid, existing values can be inserted — this is called **referential integrity**.
 
-### Creating Related Tables
+There are three main types of relationships in relational databases:
+
+| Type           | Description                                      | Example                          |
+| -------------- | ------------------------------------------------ | -------------------------------- |
+| One-to-One     | One row in A links to exactly one row in B       | User ↔ User Profile              |
+| **One-to-Many**    | One row in A links to many rows in B             | Customer → Orders                |
+| **Many-to-Many**   | Many rows in A link to many rows in B            | Students ↔ Courses               |
+
+> 💡 **Industry note:** One-to-Many is by far the most commonly used relationship in real-world applications (e.g. users & posts, customers & orders, employees & departments). Many-to-Many is also widely used wherever there is a subscription, tagging, or enrollment system. One-to-One is the least common and is usually used to split a large table for performance or security reasons.
+
+---
+
+### One-to-Many Relationship
+
+One record in the parent table can have **many** related records in the child table, but each child record belongs to only **one** parent. The foreign key always lives on the "many" side.
+
+**Example:** One customer can place many orders, but each order belongs to one customer.
 
 ```sql
--- Parent table
+-- Parent table (the "one" side)
 CREATE TABLE customers (
   id SERIAL PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
@@ -492,7 +508,7 @@ CREATE TABLE customers (
   phone TEXT UNIQUE NOT NULL
 );
 
--- Child table — cust_id must match an existing id in customers
+-- Child table (the "many" side) — each order belongs to one customer
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -518,6 +534,69 @@ VALUES (349.75, 3);
 ```
 
 ⚠ Inserting an order with a `cust_id` that doesn't exist in `customers` will be rejected
+
+---
+
+### Many-to-Many Relationship
+
+A **many-to-many** relationship exists when one record in table A can relate to many records in table B, and vice versa. This cannot be represented with a single foreign key — it requires a **junction table** (also called a bridge or linking table) that sits between the two and holds both foreign keys.
+
+**Example:** A student can enroll in many courses, and a course can have many students.
+
+```sql
+CREATE TABLE students (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE course (
+  id SERIAL PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  fees DECIMAL(8,2) NOT NULL
+);
+
+-- Junction table — links students and courses (the "many-to-many" bridge)
+CREATE TABLE enrollment (
+  id SERIAL PRIMARY KEY NOT NULL,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  student_id INTEGER NOT NULL,
+  course_id INTEGER NOT NULL,
+  FOREIGN KEY (student_id) REFERENCES students(id),
+  FOREIGN KEY (course_id) REFERENCES course(id)
+);
+```
+
+Always insert into the parent tables first, then the junction table:
+
+```sql
+-- 1. Insert students
+INSERT INTO students (name) VALUES
+  ('John Smith'), ('Emma Johnson'), ('Michael Brown'),
+  ('Sarah Wilson'), ('David Lee'), ('Lisa Anderson'),
+  ('James Taylor'), ('Maria Garcia');
+
+-- 2. Insert courses
+INSERT INTO course (name, fees) VALUES
+  ('Mathematics 101', 499.99),
+  ('Physics 101', 549.99),
+  ('Computer Science 101', 599.99),
+  ('English Literature', 449.99),
+  ('History 101', 399.99),
+  ('Chemistry 101', 529.99),
+  ('Biology 101', 519.99),
+  ('Economics 101', 479.99);
+
+-- 3. Insert enrollments (both students and courses must exist first)
+INSERT INTO enrollment (date, student_id, course_id) VALUES
+  ('2024-01-15', 1, 1), ('2024-01-15', 1, 3), ('2024-01-16', 1, 5),
+  ('2024-01-14', 2, 2), ('2024-01-14', 2, 4), ('2024-01-15', 2, 6),
+  ('2024-01-16', 3, 1), ('2024-01-16', 3, 2), ('2024-01-17', 3, 3),
+  ('2024-01-17', 3, 7), ('2024-01-15', 4, 4), ('2024-01-15', 4, 8),
+  ('2024-01-16', 5, 3), ('2024-01-16', 5, 6), ('2024-01-17', 5, 7),
+  ('2024-01-14', 6, 1), ('2024-01-14', 6, 5), ('2024-01-15', 6, 8),
+  ('2024-01-17', 7, 2), ('2024-01-17', 7, 4),
+  ('2024-01-15', 8, 1), ('2024-01-15', 8, 3), ('2024-01-16', 8, 6);
+```
 
 ---
 
@@ -590,12 +669,93 @@ ON c.id = d.cust_id;
 
 ### Join Types Summary
 
-| Join Type    | Returns                                               |
-| ------------ | ----------------------------------------------------- |
-| `CROSS JOIN` | All combinations of both tables                       |
-| `INNER JOIN` | Only rows with a match in both tables                 |
-| `LEFT JOIN`  | All left rows + matching right rows (NULL if no match)|
-| `RIGHT JOIN` | All right rows + matching left rows (NULL if no match)|
+| Join Type    | Returns                                                |
+| ------------ | ------------------------------------------------------ |
+| `CROSS JOIN` | All combinations of both tables                        |
+| `INNER JOIN` | Only rows with a match in both tables                  |
+| `LEFT JOIN`  | All left rows + matching right rows (NULL if no match) |
+| `RIGHT JOIN` | All right rows + matching left rows (NULL if no match) |
+
+### Joining Multiple Tables
+
+When working with a many-to-many relationship, you join through the junction table by chaining multiple `JOIN` clauses. Each `JOIN` connects one additional table.
+
+```sql
+-- Get full enrollment details: student name, course name, date and fee
+SELECT s.name AS student_name, c.name AS course_name,
+       e.date AS enroll_date, c.fees AS course_fee
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id;
+```
+
+**Example — Count of courses per student:**
+
+```sql
+SELECT s.name AS student_name, COUNT(c.id) AS no_of_courses
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id
+GROUP BY s.name;
+```
+
+**Example — Total courses and total fees per student:**
+
+```sql
+SELECT s.name AS student_name,
+       COUNT(c.id)   AS no_of_courses,
+       SUM(c.fees)   AS total_spend
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id
+GROUP BY s.name;
+```
+
+### Subquery with ORDER BY and LIMIT
+
+A **subquery** (inner query) runs first and its result is treated as a temporary table by the outer query. This is useful when you want to sort or filter on an aggregated value.
+
+```sql
+-- Find the student who spent the most on courses
+SELECT *
+FROM (
+  SELECT s.name        AS student_name,
+         COUNT(c.id)   AS no_of_courses,
+         SUM(c.fees)   AS total_spend
+  FROM enrollment e
+  JOIN students s ON e.student_id = s.id
+  JOIN course c   ON c.id = e.course_id
+  GROUP BY s.name
+) a
+ORDER BY total_spend DESC
+LIMIT 1;
+```
+
+> The inner query (`a`) groups and aggregates the data. The outer query then sorts it and picks the top 1 row.
+
+### EXTRACT
+
+`EXTRACT` pulls out a specific part of a date (year, month, day, etc.) and can be used in `SELECT` or `GROUP BY` to group data by time periods.
+
+**Syntax:**
+
+```sql
+EXTRACT(part FROM date_column)
+```
+
+Common parts: `YEAR`, `MONTH`, `DAY`, `HOUR`, `MINUTE`
+
+**Example — Enrollments and revenue grouped by year:**
+
+```sql
+SELECT COUNT(c.id)                      AS no_of_courses,
+       SUM(c.fees)                      AS total_spend,
+       EXTRACT(YEAR FROM e.date)        AS year
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id
+GROUP BY year;
+```
 
 ---
 
@@ -626,4 +786,7 @@ ON c.id = d.cust_id;
 * ALTER TABLE modifies table structure (columns, names, types, constraints)
 * CASE expression adds conditional logic directly inside queries
 * FOREIGN KEY links tables and enforces referential integrity
+* Many-to-many relationships use a junction table with two foreign keys
 * Joins combine data from multiple tables based on related columns
+* Subqueries wrap a query as a temporary table for further filtering or sorting
+* EXTRACT pulls out a specific part (year, month, day) from a date column
