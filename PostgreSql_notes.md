@@ -759,6 +759,144 @@ GROUP BY year;
 
 ---
 
+## Views
+
+A **view** is a saved query stored in the database under a name. It behaves like a virtual table — you can `SELECT` from it just like a real table, but it doesn't store data itself. Every time you query the view, it runs the underlying query fresh.
+
+Views are useful for:
+- Simplifying complex joins that you query repeatedly
+- Hiding sensitive columns from certain users
+- Keeping query logic in one place so it's easy to maintain
+
+**Syntax:**
+
+```sql
+CREATE VIEW view_name AS
+<your query here>;
+```
+
+**Example — Save a complex join as a view:**
+
+```sql
+CREATE VIEW temp_query AS
+SELECT s.name AS student_name, c.name AS course_name,
+       e.date AS enroll_date, c.fees AS course_fee
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id;
+```
+
+Now you can query it like a normal table:
+
+```sql
+SELECT * FROM temp_query;
+```
+
+To remove a view:
+
+```sql
+DROP VIEW temp_query;
+```
+
+> 💡 **Industry note:** Views are widely used in production to expose clean, pre-joined datasets to analysts or frontend APIs without giving them access to raw tables.
+
+---
+
+## HAVING Clause
+
+`HAVING` is used to filter the results of a `GROUP BY` query. It is like `WHERE`, but applied **after** grouping and aggregation — meaning you can filter on aggregate values like `COUNT()`, `SUM()`, `AVG()` etc.
+
+**WHERE vs HAVING:**
+
+| Clause   | Filters              | Applied          |
+| -------- | -------------------- | ---------------- |
+| `WHERE`  | Individual rows      | Before grouping  |
+| `HAVING` | Aggregated groups    | After grouping   |
+
+**Syntax:**
+
+```sql
+SELECT column, AGGREGATE_FUNCTION(column)
+FROM table
+GROUP BY column
+HAVING condition;
+```
+
+**Example — Students enrolled in more than 2 courses:**
+
+```sql
+SELECT s.name AS student_name, COUNT(c.id) AS no_of_courses
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id
+GROUP BY s.name
+HAVING COUNT(c.id) > 2;
+```
+
+**Example — Students who spent more than 1500 in total fees:**
+
+```sql
+SELECT s.name AS student_name, SUM(c.fees) AS total_spend
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id
+GROUP BY s.name
+HAVING SUM(c.fees) > 1500;
+```
+
+> ⚠ You cannot use a column alias (like `total_spend`) inside `HAVING` — you must repeat the aggregate function.
+
+---
+
+## GROUP BY ROLLUP
+
+`ROLLUP` is an extension of `GROUP BY` that automatically generates **subtotals and a grand total** alongside your regular grouped rows. Instead of writing multiple queries and combining them, `ROLLUP` does it in one query.
+
+It is commonly used in reports and dashboards where you need both individual group totals and an overall total in the same result set.
+
+**Syntax:**
+
+```sql
+SELECT column, AGGREGATE_FUNCTION(column)
+FROM table
+GROUP BY ROLLUP(column);
+```
+
+**Example — Count of courses per student with a grand total row:**
+
+```sql
+SELECT COALESCE(s.name, 'Total') AS student_name,
+       COUNT(c.id) AS no_of_courses
+FROM enrollment e
+JOIN students s ON e.student_id = s.id
+JOIN course c   ON c.id = e.course_id
+GROUP BY ROLLUP(s.name)
+ORDER BY SUM(c.id);
+```
+
+The result will include one row per student **plus** an extra summary row at the end representing the total across all students.
+
+### COALESCE
+
+`COALESCE` returns the **first non-NULL value** from a list of arguments. In the `ROLLUP` example above, the grand total row has `NULL` in the `s.name` column (because it represents all students, not one). `COALESCE` replaces that `NULL` with a readable label like `'Total'`.
+
+**Syntax:**
+
+```sql
+COALESCE(value1, value2, ...)
+```
+
+**Example:**
+
+```sql
+SELECT COALESCE(NULL, NULL, 'Total');  -- Returns: 'Total'
+SELECT COALESCE('Alice', 'Total');     -- Returns: 'Alice'
+```
+
+> `COALESCE` is also useful outside of `ROLLUP` — for example, displaying `'N/A'` when a column value is `NULL` in any query.
+
+---
+
 ## Utility Commands
 
 | Command         | Purpose                  |
@@ -790,3 +928,7 @@ GROUP BY year;
 * Joins combine data from multiple tables based on related columns
 * Subqueries wrap a query as a temporary table for further filtering or sorting
 * EXTRACT pulls out a specific part (year, month, day) from a date column
+* Views save complex queries as reusable virtual tables
+* HAVING filters grouped/aggregated results (use WHERE for row-level filtering)
+* GROUP BY ROLLUP generates subtotals and a grand total in one query
+* COALESCE returns the first non-NULL value — useful for replacing NULLs with labels
