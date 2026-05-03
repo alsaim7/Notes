@@ -1,4 +1,4 @@
-# PostgreSQL Commands
+# 📘 PostgreSQL (Beginner to Advanced)
 
 ## Summary
 
@@ -1489,6 +1489,7 @@ These notes were researched, written, and compiled by **Al Saim Shakeel**.
 |---|---|
 | 👤 **Author** | Al Saim Shakeel |
 | 🐙 **GitHub** | [github.com/alsaim7](https://github.com/alsaim7) |
+| 💼 **LinkedIn** | [linkedin.com/in/alsaimshakeel7](https://www.linkedin.com/in/alsaimshakeel7/) |
 | 🌐 **Portfolio** | [alsaim.pages.dev](https://alsaim.pages.dev/) |
 
-> If you found these notes helpful, feel free to star the repo or reach out!
+> If you found these notes helpful, feel free to star the repo or connect on LinkedIn!
