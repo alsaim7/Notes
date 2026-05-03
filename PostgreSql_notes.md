@@ -1212,6 +1212,236 @@ SELECT * FROM max_emp_sal_br_dept('IT');
 
 ---
 
+## Window Functions
+
+**What it is:** Window functions perform a calculation across a set of rows that are related to the current row — similar to aggregate functions, but **without collapsing the rows into one**. Every row keeps its own identity in the result while also getting an extra calculated column alongside it.
+
+**When to use:** Use window functions when you need per-row calculations that involve other rows — e.g. running totals, rankings, comparing a row's value to the previous/next row, or comparing an employee's salary to their department average. Used heavily in industry for analytics, reporting dashboards, and data science pipelines.
+
+### OVER()
+
+`OVER()` is the clause that turns a regular aggregate into a window function. The calculation is applied across all rows (or a defined window of rows) without grouping.
+
+**Syntax:**
+
+```sql
+SELECT column, AGGREGATE_FUNCTION(column) OVER(ORDER BY column)
+FROM table_name;
+```
+
+**Example — Running average of salary ordered by salary:**
+
+```sql
+SELECT fname, salary, AVG(salary) OVER(ORDER BY salary)
+FROM employee;
+```
+
+> Each row shows its own salary plus the running average of all salaries up to and including that row.
+
+---
+
+### ROW_NUMBER()
+
+**What it is:** Assigns a unique sequential number to each row in the result set. The numbering restarts when used with `PARTITION BY`.
+
+**When to use:** Use when you need to number rows for pagination, pick the first record per group, or de-duplicate data. Very common in industry ETL pipelines and APIs.
+
+**Syntax:**
+
+```sql
+SELECT ROW_NUMBER() OVER(ORDER BY column), column FROM table_name;
+
+-- With PARTITION BY — restarts numbering per group
+SELECT ROW_NUMBER() OVER(PARTITION BY column), column FROM table_name;
+```
+
+**Example:**
+
+```sql
+-- Number all employees ordered by first name
+SELECT ROW_NUMBER() OVER(ORDER BY fname), fname, department, salary
+FROM employee;
+
+-- Number employees within each department (restarts per department)
+SELECT ROW_NUMBER() OVER(PARTITION BY department), fname, department, salary
+FROM employee;
+```
+
+---
+
+### RANK() and DENSE_RANK()
+
+**What it is:** Both assign a rank to each row based on a sort order. The difference is how they handle ties — `RANK()` skips numbers after a tie, `DENSE_RANK()` does not.
+
+**When to use:** Use when you need leaderboards, top-N per group, or any ranked output. Used in industry for sales rankings, performance reviews, and competition results.
+
+**Syntax:**
+
+```sql
+SELECT column, RANK()       OVER(ORDER BY column DESC) FROM table_name;
+SELECT column, DENSE_RANK() OVER(ORDER BY column DESC) FROM table_name;
+```
+
+**Example:**
+
+```sql
+-- RANK: if two people tie at rank 1, the next person gets rank 3 (skips 2)
+SELECT fname, salary, RANK() OVER(ORDER BY salary DESC)
+FROM employee;
+
+-- DENSE_RANK: if two people tie at rank 1, the next person gets rank 2 (no skip)
+SELECT fname, salary, DENSE_RANK() OVER(ORDER BY salary DESC)
+FROM employee;
+```
+
+| Function       | Ties behaviour          | Example ranks    |
+| -------------- | ----------------------- | ---------------- |
+| `RANK()`       | Skips numbers after tie | 1, 1, 3, 4       |
+| `DENSE_RANK()` | No skip after tie       | 1, 1, 2, 3       |
+
+---
+
+### LAG()
+
+**What it is:** `LAG()` gives access to the value of the **previous row** in the ordered window. It returns `NULL` for the first row since there is no row before it.
+
+**When to use:** Use when you need to compare a row's value to the one before it — e.g. month-over-month salary change, previous order value. Common in time-series analysis and financial reporting.
+
+**Syntax:**
+
+```sql
+SELECT column, LAG(column) OVER(ORDER BY column) FROM table_name;
+```
+
+**Example:**
+
+```sql
+SELECT fname, salary, LAG(salary) OVER(ORDER BY salary DESC)
+FROM employee;
+```
+
+> Each row shows its own salary and the salary of the person ranked just above them.
+
+---
+
+### LEAD()
+
+**What it is:** `LEAD()` gives access to the value of the **next row** in the ordered window. It returns `NULL` for the last row since there is no row after it.
+
+**When to use:** Use when you need to look ahead — e.g. comparing current salary to the next lower salary, or previewing the next event in a sequence.
+
+**Syntax:**
+
+```sql
+SELECT column, LEAD(column) OVER(ORDER BY column) FROM table_name;
+```
+
+**Example:**
+
+```sql
+SELECT fname, salary, LEAD(salary) OVER(ORDER BY salary DESC)
+FROM employee;
+```
+
+> Each row shows its own salary and the salary of the person ranked just below them.
+
+---
+
+## CTE (Common Table Expression)
+
+**What it is:** A CTE is a temporary named result set defined at the top of a query using the `WITH` keyword. It works like a subquery but is defined once and can be referenced by name in the main query — making complex queries much easier to read and maintain.
+
+**When to use:** Use a CTE when a subquery would need to be repeated, or when a query is getting too nested and hard to follow. In industry, CTEs are the preferred way to break down complex multi-step queries — they are cleaner than nested subqueries and easier to debug. Most analytics and reporting queries in production use CTEs.
+
+**Syntax:**
+
+```sql
+WITH cte_name AS (
+  -- your subquery here
+)
+SELECT ... FROM main_table
+JOIN cte_name ON condition;
+```
+
+**Example — Find employees earning above their department's average salary:**
+
+```sql
+WITH avg_sal AS (
+  SELECT department, AVG(salary) AS average
+  FROM employee
+  GROUP BY department
+)
+SELECT e.fname, e.department, e.salary, a.average
+FROM employee e
+JOIN avg_sal a ON a.department = e.department
+WHERE e.salary > a.average;
+```
+
+> The CTE `avg_sal` calculates the average salary per department first. The main query then joins it against the employee table and filters for employees who beat their department's average.
+
+⚠ A CTE only exists for the duration of the single query it belongs to — it is not stored in the database like a View.
+
+---
+
+## Triggers
+
+**What it is:** A trigger is a function that **automatically runs** before or after a specific event on a table — such as INSERT, UPDATE, or DELETE. It consists of two parts: a **trigger function** (the logic) and a **trigger** (which attaches the function to a table event).
+
+**When to use:** Use triggers to enforce business rules automatically at the database level — e.g. prevent negative salaries, log changes to an audit table, auto-update a timestamp. In industry, triggers are used for auditing, data validation, and enforcing constraints that are too complex for a simple CHECK constraint.
+
+⚠ Overusing triggers can make database behaviour hard to debug since they fire silently in the background. Use them only when the logic genuinely belongs in the database.
+
+**Syntax:**
+
+```sql
+-- Step 1: Create the trigger function
+CREATE OR REPLACE FUNCTION function_name()
+RETURNS TRIGGER AS
+$$
+  BEGIN
+    -- logic using NEW (new row values) or OLD (old row values)
+    RETURN NEW;
+  END;
+$$
+LANGUAGE plpgsql;
+
+-- Step 2: Attach it to a table event
+CREATE TRIGGER trigger_name
+BEFORE|AFTER INSERT|UPDATE|DELETE ON table_name
+FOR EACH ROW
+EXECUTE FUNCTION function_name();
+```
+
+**Example — Prevent negative salary on update:**
+
+```sql
+-- Step 1: Trigger function — if salary goes negative, reset it to 0
+CREATE OR REPLACE FUNCTION no_negative_salary()
+RETURNS TRIGGER AS
+$$
+  BEGIN
+    IF NEW.salary < 0 THEN
+      NEW.salary := 0;
+    END IF;
+    RETURN NEW;
+  END;
+$$
+LANGUAGE plpgsql;
+
+-- Step 2: Attach to the employee table, fires before every UPDATE
+CREATE TRIGGER before_update_salary
+BEFORE UPDATE ON employee
+FOR EACH ROW
+EXECUTE FUNCTION no_negative_salary();
+
+-- Test it — even though -245 is passed, the trigger resets it to 0
+CALL up_sal(1, -245);
+```
+
+> `NEW` refers to the incoming row values during an INSERT or UPDATE. `OLD` refers to the existing row values before the change.
+
+---
+
 ## Utility Commands
 
 | Command         | Purpose                  |
