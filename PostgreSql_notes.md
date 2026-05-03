@@ -1473,3 +1473,22 @@ CALL up_sal(1, -245);
 * GROUP BY ROLLUP generates subtotals and a grand total in one query
 * COALESCE returns the first non-NULL value — useful for replacing NULLs with labels
 * Procedures perform actions (DML) and are called with CALL; Functions return values and are used in SELECT
+* Window functions calculate across related rows without collapsing them — unlike GROUP BY
+* ROW_NUMBER, RANK, DENSE_RANK assign numbers/ranks per row; RANK skips after ties, DENSE_RANK does not
+* LAG accesses the previous row's value; LEAD accesses the next row's value
+* CTEs (WITH clause) define a named temporary result — cleaner and more readable than nested subqueries
+* Triggers fire automatically on INSERT/UPDATE/DELETE — use for auditing and enforcing complex rules
+
+---
+
+## Credits
+
+These notes were researched, written, and compiled by **Al Saim Shakeel**.
+
+| | |
+|---|---|
+| 👤 **Author** | Al Saim Shakeel |
+| 🐙 **GitHub** | [github.com/alsaim7](https://github.com/alsaim7) |
+| 🌐 **Portfolio** | [alsaim.pages.dev](https://alsaim.pages.dev/) |
+
+> If you found these notes helpful, feel free to star the repo or reach out!
