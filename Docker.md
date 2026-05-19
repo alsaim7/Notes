@@ -695,6 +695,130 @@ docker ps
 
 ---
 
+# Important Difference Between docker run and docker compose
+
+## docker run
+
+```bash
+docker run image-name
+```
+
+### Behavior
+
+Usually creates a NEW container every time.
+
+Example:
+
+```bash
+docker run nginx
+```
+
+Running again:
+
+```bash
+docker run nginx
+```
+
+creates another new container.
+
+---
+
+## docker compose up
+
+```bash
+docker compose up
+```
+
+### Behavior
+
+Usually reuses EXISTING compose containers.
+
+Docker Compose intelligently manages:
+
+* restarting
+* reusing
+* recreating when needed
+
+instead of always creating new containers.
+
+---
+
+# Compose Lifecycle Commands
+
+## Start Compose Services
+
+```bash
+docker compose up
+```
+
+### Use
+
+Starts compose services in foreground.
+
+Stop using:
+
+```text
+Ctrl + C
+```
+
+---
+
+## Start Compose in Background
+
+```bash
+docker compose up -d
+```
+
+### Use
+
+Runs services in detached/background mode.
+
+Terminal becomes free.
+
+---
+
+## Stop Compose Services Only
+
+```bash
+docker compose stop
+```
+
+### Use
+
+Stops containers but keeps them.
+
+Containers can be restarted later.
+
+---
+
+## Stop and Remove Compose Containers
+
+```bash
+docker compose down
+```
+
+### Use
+
+Stops and removes compose containers.
+
+Compose network is also removed.
+
+---
+
+## View Compose Logs
+
+```bash
+docker compose logs
+```
+
+### Use
+
+Shows logs from all compose services.
+
+Useful for debugging.
+
+---
+
 # Current Multi-Container Architecture
 
 ```text
