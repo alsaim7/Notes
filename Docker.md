@@ -851,6 +851,324 @@ This is already strong real-world Docker beginner knowledge.
 
 ---
 
+# Docker Networking
+
+## Why Docker Networking is Needed
+
+When multiple containers exist:
+
+* frontend container
+* backend container
+* database container
+
+containers need a way to communicate with each other.
+
+---
+
+# Important Concept
+
+Inside a container:
+
+```text
+localhost = current container itself
+```
+
+This is VERY important.
+
+---
+
+# Example Problem
+
+Suppose frontend container tries:
+
+```text
+http://localhost:8000
+```
+
+Inside frontend container:
+
+```text
+localhost
+```
+
+means:
+
+```text
+frontend container itself
+```
+
+NOT backend container.
+
+So container-to-container communication fails.
+
+---
+
+# Docker Compose Networking Solution
+
+Docker Compose automatically creates:
+
+* internal network
+* DNS/service discovery
+
+for all compose services.
+
+---
+
+# Service Names Become Hostnames
+
+Example:
+
+```yaml
+services:
+  backend:
+  frontend:
+```
+
+Compose automatically creates:
+
+```text
+backend
+frontend
+```
+
+as internal hostnames.
+
+---
+
+# Correct Internal Communication
+
+Frontend container should use:
+
+```text
+http://backend:8000
+```
+
+instead of:
+
+```text
+http://localhost:8000
+```
+
+for internal Docker networking.
+
+---
+
+# Why This is Powerful
+
+Docker networking gives:
+
+* automatic private networking
+* no manual IP management
+* container discovery
+* easier scaling
+* better deployment architecture
+
+Very useful for:
+
+* PostgreSQL containers
+* Redis
+* backend services
+* microservices
+* VPS deployment
+* production environments
+
+---
+
+# Important Current Understanding
+
+Currently your project still works using:
+
+```text
+localhost:8000
+```
+
+because:
+
+* browser runs outside Docker
+* browser accesses backend through exposed ports
+
+So browser communication still works.
+
+---
+
+# Internal Docker Communication Test Method
+
+## Goal
+
+Test whether frontend is communicating internally with backend container.
+
+---
+
+# Step 1
+
+In:
+
+```text
+docker-compose.yml
+```
+
+temporarily REMOVE backend ports section:
+
+```yaml
+ports:
+  - "8000:8000"
+```
+
+Backend becomes:
+
+```yaml
+backend:
+  build: ./backend
+  env_file:
+    - ./backend/.env
+```
+
+---
+
+# What Happens Now?
+
+Backend becomes:
+
+* NOT accessible from your PC/browser
+* ONLY accessible internally between containers
+
+---
+
+# Result Analysis
+
+## If frontend STILL works
+
+Then frontend is successfully using:
+
+```text
+http://backend:8000
+```
+
+through Docker internal networking.
+
+---
+
+## If frontend breaks
+
+Then frontend/browser is still trying:
+
+```text
+http://localhost:8000
+```
+
+instead of internal container networking.
+
+---
+
+# Why This Test is Useful
+
+This is how developers verify:
+
+* internal Docker networking
+* service discovery
+* container communication
+
+in real-world applications.
+
+---
+
+# How to Completely Remove Docker Resources
+
+## Stop Compose Services
+
+```bash
+docker compose down
+```
+
+### Use
+
+Stops and removes compose containers.
+
+---
+
+## Remove All Containers
+
+```bash
+docker rm $(docker ps -aq)
+```
+
+### Use
+
+Deletes all containers.
+
+---
+
+## Remove All Images
+
+```bash
+docker rmi $(docker images -q)
+```
+
+### Use
+
+Deletes all images.
+
+---
+
+## Full Docker Cleanup
+
+```bash
+docker system prune -a
+```
+
+### Use
+
+Removes:
+
+* unused images
+* stopped containers
+* cache
+* unused networks
+
+---
+
+# Uninstall Docker Desktop
+
+After cleanup:
+
+1. Open Windows Settings
+2. Apps
+3. Docker Desktop
+4. Uninstall
+
+WSL distributions may still remain separately.
+
+---
+
+# Remove Docker WSL Data (Optional)
+
+Open terminal:
+
+```bash
+wsl --list
+```
+
+You may see:
+
+```text
+docker-desktop
+docker-desktop-data
+```
+
+Remove them:
+
+```bash
+wsl --unregister docker-desktop
+```
+
+```bash
+wsl --unregister docker-desktop-data
+```
+
+This fully removes Docker WSL storage.
+
+---
+
 # Next Topics Later
 
 Future Docker topics:
